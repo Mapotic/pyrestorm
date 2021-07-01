@@ -47,7 +47,7 @@ class BaseRESTManager(object):
 
     def patch(self, obj: BaseModel, id=None, url: str = None, expected=(200,), **kwargs):
         url = url or self.patch_url(id)
-        return self.http.patch(url, json=obj.json(), expected=expected, **kwargs)
+        return self.http.patch(url, json=obj.json(exclude_unset=True), expected=expected, **kwargs)
 
     def put_url(self, id):
         return self.get_url(id)
