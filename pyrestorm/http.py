@@ -49,7 +49,8 @@ class Http(object):
             r = client_method(url, **payload)
 
             if expected and r.status_code not in expected:
-                raise HttpExceptionError(f'Invalid response: {r.status_code}')
+                msg = getattr(r, 'text', '')
+                raise HttpExceptionError(f'Invalid response: {r.status_code} {msg}')
 
             return r
 
