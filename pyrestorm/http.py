@@ -1,9 +1,14 @@
 import json as _json
+import typing
 from logging import getLogger
+from pprint import pformat
 from typing import Optional
 
 import httpx
-from pprint import pformat
+
+if typing.TYPE_CHECKING:
+    from .manager import BaseRESTManager
+
 logger = getLogger(__file__)
 
 
@@ -14,7 +19,8 @@ class HttpExceptionError(Exception):
 class Http(object):
     HTTP_METHODS = ['get', 'post', 'patch', 'put', 'delete']
 
-    def __init__(self, debug=False):
+    def __init__(self, manager: 'BaseRESTManager', debug=False):
+        self.manager = manager
         self.debug = debug
 
     def request(self,
@@ -46,13 +52,19 @@ class Http(object):
                 _payload = pformat(payload)
                 logger.info(f'Pyrestorm: call url `{url}` with {_payload}')
 
-            r = client_method(url, **payload)
+            response = client_method(url, **payload)
+            self.handle_response(response, expected)
+            return response
 
-            if expected and r.status_code not in expected:
-                msg = getattr(r, 'text', '')
-                raise HttpExceptionError(f'Invalid response: {r.status_code} {msg}')
+    def handle_response(self, response, expected=None):
 
-            return r
+        for callback in self.manager.response_callbacks:
+            if callable(callback):
+                callback(response)
+
+        if expected and response.status_code not in expected:
+            msg = getattr(response, 'text', '')
+            raise HttpExceptionError(f'Invalid response: {response.status_code} {msg}')
 
     def get(self, url, headers=None, **kwargs):
         return self.request(url, 'get', headers=headers, **kwargs)
