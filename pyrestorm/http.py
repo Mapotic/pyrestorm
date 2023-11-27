@@ -30,6 +30,7 @@ class Http(object):
                 data: Optional[dict] = None,
                 json: Optional[str] = None,
                 expected: list = None,
+                timeout: int = None,
                 **kwargs):
 
         method = method.lower()
@@ -51,6 +52,9 @@ class Http(object):
             if self.debug:
                 _payload = pformat(payload)
                 logger.info(f'Pyrestorm: call url `{url}` with {_payload}')
+
+            if timeout:
+                payload['timeout'] = timeout
 
             response = client_method(url, **payload)
             self.handle_response(response, expected)
