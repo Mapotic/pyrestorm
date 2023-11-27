@@ -5,10 +5,11 @@ from .http import Http
 
 class BaseRESTManager(object):
 
-    def __init__(self, base_url: str, debug: bool = False, response_callbacks: list = None):
+    def __init__(self, base_url: str, debug: bool = False, response_callbacks: list = None, exception_callbacks=None):
         self.debug = debug
         self.base_url = base_url
         self.response_callbacks = response_callbacks or []
+        self.exception_callbacks = exception_callbacks or []
         self.http = Http(manager=self, debug=debug)
 
     ###################################

@@ -1,5 +1,6 @@
 import json as _json
 import typing
+from datetime import datetime
 from logging import getLogger
 from pprint import pformat
 from typing import Optional
@@ -53,12 +54,20 @@ class Http(object):
                 _payload = pformat(payload)
                 logger.info(f'Pyrestorm: call url `{url}` with {_payload}')
 
-            if timeout:
-                payload['timeout'] = timeout
+            start = datetime.now()
+            try:
+                response = client_method(url, timeout=timeout, **payload)
+            except httpx.TimeoutException as e:
+                self.handle_exception(e, duration=(datetime.now() - start).total_seconds())
+                raise e
 
-            response = client_method(url, **payload)
             self.handle_response(response, expected)
             return response
+
+    def handle_exception(self, exception, **kwargs):
+        for callback in self.manager.exception_callbacks:
+            if callable(callback):
+                callback(exception, **kwargs)
 
     def handle_response(self, response, expected=None):
 
